@@ -22,11 +22,15 @@ while running:
             WIDTH, HEIGHT = event.w, event.h
             screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 
+        joystick.handle_event(event)
+
     joystick.update()
     hero.move(joystick.get_direction())
 
     screen.fill((20, 20, 20))
     hero.draw(screen)
+
+    joystick.draw(screen)
 
     pygame.display.flip()
     clock.tick(60)
