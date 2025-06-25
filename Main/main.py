@@ -1,6 +1,7 @@
 import pygame
-from Heros import Hero
-from HUB import Joystick
+from Heros import Hero, Enemy
+from HUB import Joystick, ButtonAtackHero
+from NPCs import Minion, Creep
 
 pygame.init()
 
@@ -11,7 +12,13 @@ pygame.display.set_caption("My MOBA Game")
 clock = pygame.time.Clock()
 
 hero = Hero(100, 100)
+enemy = Enemy(1200, 200)
+
+minion = Minion(600, 200)
+creep = Creep(800, 200)
+
 joystick = Joystick()
+button_attack = ButtonAtackHero(1200, 600, 50)
 
 running = True
 while running:
@@ -28,9 +35,15 @@ while running:
     hero.move(joystick.get_direction())
 
     screen.fill((20, 20, 20))
+
     hero.draw(screen)
+    enemy.draw(screen)
+
+    minion.draw(screen)
+    creep.draw(screen)
 
     joystick.draw(screen)
+    button_attack.draw(screen)
 
     pygame.display.flip()
     clock.tick(60)
