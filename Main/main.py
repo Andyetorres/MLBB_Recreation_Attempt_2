@@ -1,6 +1,6 @@
 import pygame
 import time
-from Heros import Hero, Enemy
+from Heros import Enemy , BasicHero
 from HUB import Joystick, ButtonAtackHero, DamageText
 from NPCs import Minion, Creep
 
@@ -13,13 +13,15 @@ pygame.display.set_caption("My MOBA Game")
 
 clock = pygame.time.Clock()
 
-hero = Hero(100, 100)
+# El héroe es BasicHero
+hero = BasicHero(100, 100)
 enemy_1 = Enemy(1100, 200)
 enemy_2 = Enemy(1100, 350)
 
 damage_texts = []
 
-minion = Minion(600, 200)
+red_minion = Minion(600, 200)
+blue_minion = Minion(600, 350)
 creep = Creep(800, 200)
 
 joystick = Joystick()
@@ -35,19 +37,21 @@ while running:
             screen = pygame.display.set_mode((WIDTH, HEIGHT), pygame.RESIZABLE)
 
         joystick.handle_event(event)
-        button_attack.handle_event(event)  # <-- Aquí
+        button_attack.handle_event(event)
 
     joystick.update()
     hero.move(joystick.get_direction())
 
     # Lógica de ataque
     if button_attack.is_clicked():
-        enemies = [enemy_1, enemy_2]
+        # Incluye todos los objetivos posibles
+        enemies = [enemy_1, enemy_2, red_minion, creep]
         visible_enemies = [e for e in enemies if screen.get_rect().colliderect(e.rect)]
         for enemy in visible_enemies:
             if hero.in_attack_range(enemy):
-                if hero.attack(enemy):
-                    damage_texts.append(DamageText(hero.attack_damage, enemy.rect.center))
+                damage = hero.attack(enemy)  # Ahora retorna el daño infligido
+                if damage > 0:
+                    damage_texts.append(DamageText(damage, enemy.rect.center))
                 break  # Ataca solo a uno por click
 
     screen.fill((20, 20, 20))
@@ -56,7 +60,8 @@ while running:
     enemy_1.draw(screen)
     enemy_2.draw(screen)
 
-    minion.draw(screen)
+    blue_minion.draw(screen)
+    red_minion.draw(screen)
     creep.draw(screen)
 
     joystick.draw(screen)
