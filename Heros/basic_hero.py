@@ -20,8 +20,8 @@ class BasicHero:
 
         self.physical_defense = 10
         self.magical_defense = 5
-        self.crit_chance = 0.1  # 10%
-        self.crit_damage = 2.0  # 200% daño
+        self.crit_chance = 0.1
+        self.crit_damage = 2.0
 
         self.life_steal = 0.0
         self.spell_vamp = 0.0
@@ -41,8 +41,8 @@ class BasicHero:
         self.cooldown_reduction = 0.0
 
         # Rango
-        self.attack_range = 90      # alcance de ataque básico (en píxeles)
-        self.vision_range = 200     # campo visual (en píxeles)
+        self.attack_range = 90                         # alcance de ataque básico (en píxeles)
+        self.vision_range = self.attack_range * 2      # campo visual = doble del ataque
 
         # Ataque
         self.attack_cooldown_ms = 1110
@@ -64,9 +64,12 @@ class BasicHero:
         distance = pygame.Vector2(self.rect.center).distance_to(enemy.rect.center)
         return distance <= self.attack_range
 
-    def can_see(self, enemy):
+    def in_vision_range(self, enemy):
         distance = pygame.Vector2(self.rect.center).distance_to(enemy.rect.center)
         return distance <= self.vision_range
+
+    def can_see(self, enemy):
+        return self.in_vision_range(enemy)
 
     def can_attack(self):
         return pygame.time.get_ticks() - self.last_attack_time >= self.attack_cooldown_ms
@@ -93,6 +96,7 @@ class BasicHero:
         pygame.draw.rect(surface, self.color, self.rect)
         self.draw_health_bar(surface)
         self.draw_attack_range(surface)
+        # self.draw_vision_range(surface)  # Descomenta para depuración visual
 
     def draw_health_bar(self, surface):
         bar_width = self.rect.width
