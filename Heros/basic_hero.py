@@ -6,7 +6,7 @@ class BasicHero:
         self.color = (0, 200, 255)
 
         # Posición y movimiento
-        self.speed = 4
+        self.speed = 7
         self.move_direction = pygame.Vector2(0, 0)
 
         # Estadísticas base

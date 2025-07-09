@@ -5,13 +5,14 @@ class ButtonAttackMinion:
         self.x = x
         self.y = y
         self.radius = radius
-        self.default_color = (0, 128, 0)         # Verde
-        self.active_color = (100, 255, 100)      # Verde claro
+        self.default_color = (0, 0, 255)        # Verde
+        self.active_color = (100, 100, 255)      # Verde claro
         self.clicked = False
 
     def draw(self, surface):
         color = self.active_color if self.clicked else self.default_color
         pygame.draw.circle(surface, color, (self.x, self.y), self.radius)
+
 
     def handle_event(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:

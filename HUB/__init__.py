@@ -3,3 +3,4 @@ from .buttonAtack import ButtonAtackHero
 from .dps import DamageText
 from .mark import TargetMark
 from .mionionAtack import ButtonAttackMinion
+from .clockController import ClockController

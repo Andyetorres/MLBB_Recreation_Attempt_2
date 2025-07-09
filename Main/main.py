@@ -1,7 +1,7 @@
 import pygame
 import time
 from Heros import Enemy , BasicHero
-from HUB import Joystick, ButtonAtackHero, DamageText, TargetMark, ButtonAttackMinion
+from HUB import Joystick, ButtonAtackHero, DamageText, TargetMark, ButtonAttackMinion, ClockController
 from NPCs import Minion, Creep
 
 
@@ -26,8 +26,10 @@ creep = Creep(800, 200)
 
 joystick = Joystick()
 button_attack = ButtonAtackHero(1200, 600, 50)
-button_attack_minion = ButtonAttackMinion(1200, 500, 50)
+button_attack_minion = ButtonAttackMinion(1200, 500, 40)
 target_marker = TargetMark()
+
+clock_hud = ClockController(x=WIDTH // 2, y=40)
 
 running = True
 while running:
@@ -81,7 +83,7 @@ while running:
 
         # Si se activa el botón de minions
     if button_attack_minion.is_clicked():
-        minions = [red_minion]
+        minions = [red_minion,creep]
         visible_minions = [
             m for m in minions if screen.get_rect().colliderect(m.rect) and hero.can_see(m)
         ]
@@ -118,8 +120,11 @@ while running:
     joystick.draw(screen)
     button_attack.draw(screen)
     target_marker.draw(screen)
+    button_attack_minion.draw(screen)
 
-
+    # Dibuja el reloj global
+    clock_hud.draw(screen)
+    
     # Dibuja los textos de daño
     for dmg in damage_texts:
         dmg.draw(screen)
