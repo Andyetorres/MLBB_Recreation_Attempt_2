@@ -3,6 +3,7 @@ import time
 from Heros import Enemy , BasicHero
 from HUB import Joystick, ButtonAtackHero, DamageText, TargetMark, ButtonAttackMinion, ClockController
 from NPCs import Minion, Creep
+from Map import SimpleTower
 
 
 pygame.init()
@@ -15,7 +16,7 @@ clock = pygame.time.Clock()
 
 # El héroe es BasicHero
 hero = BasicHero(100, 100)
-enemy_1 = Enemy(1100, 200)
+enemy_1 = Enemy(900, 200)
 enemy_2 = Enemy(1100, 350)
 
 damage_texts = []
@@ -24,12 +25,17 @@ red_minion = Minion(600, 200)
 blue_minion = Minion(600, 350)
 creep = Creep(800, 200)
 
+tower = SimpleTower(200,200)
+
 joystick = Joystick()
 button_attack = ButtonAtackHero(1200, 600, 50)
 button_attack_minion = ButtonAttackMinion(1200, 500, 40)
 target_marker = TargetMark()
 
 clock_hud = ClockController(x=WIDTH // 2, y=40)
+
+# Controlador global de objetivo mantenido
+current_target = None
 
 running = True
 while running:
@@ -44,67 +50,97 @@ while running:
         button_attack.handle_event(event)
         button_attack_minion.handle_event(event)
 
-
     joystick.update()
-    hero.move(joystick.get_direction())
+    hero.move(joystick.get_direction())  # Movimiento manual
 
-    # Lógica de ataque
+    # 🔵 ATAQUE A HÉROES → MINIONS == CREEPS → TORRES (Con cambio dinámico)
     if button_attack.is_clicked():
-        enemies = [enemy_1, enemy_2, red_minion, creep]
+        all_targets = [enemy_1, enemy_2, red_minion, creep, tower]
 
-        # Filtra enemigos que estén en pantalla y visión
-        visible_enemies = [
-            e for e in enemies
+        # Primero: filtramos objetivos válidos
+        visible_targets = [
+            e for e in all_targets
             if screen.get_rect().colliderect(e.rect) and hero.can_see(e)
         ]
 
-        # Encuentra el enemigo con menos vida dentro de visión (sin importar ataque aún)
-        lowest_hp_enemy = None
-        lowest_hp = float('inf')
 
-        for enemy in visible_enemies:
-            if enemy.health < lowest_hp:
-                lowest_hp = enemy.health
-                lowest_hp_enemy = enemy
+        def prioridad(entidad):
+            orden = {"hero": 0, "minion": 1, "creep": 1, "torre": 2}
+            return orden.get(getattr(entidad, "tipo", ""), 99)
 
-        if lowest_hp_enemy:
-            target_marker.set_target(lowest_hp_enemy)  # ✅ Se marca aunque esté fuera de ataque
+        def hp(entidad):
+            return getattr(entidad, "health", float('inf'))
 
-            # Solo atacamos si está en rango de ataque
-            if hero.in_attack_range(lowest_hp_enemy):
-                damage = hero.attack(lowest_hp_enemy)
+        # Validar si hay que cambiar de objetivo
+        if (
+            current_target is None
+            or current_target.health <= 0
+            or not hero.can_see(current_target)
+            or any(
+                prioridad(e) < prioridad(current_target) or
+                (prioridad(e) == prioridad(current_target) and hp(e) < hp(current_target))
+                for e in visible_targets
+            )
+        ):
+            # Reasigna nuevo objetivo según prioridad y vida
+            current_target = None
+            for prioridad_tipo in ["hero", "minion", "creep", "torre"]:
+                posibles = [e for e in visible_targets if getattr(e, "tipo", "") == prioridad_tipo]
+                if posibles:
+                    current_target = min(posibles, key=hp)
+                    break
+
+        # Atacar o moverse hacia el objetivo
+        if current_target:
+            target_marker.set_target(current_target)
+            if hero.in_attack_range(current_target):
+                damage = hero.attack(current_target)
                 if damage > 0:
-                    damage_texts.append(DamageText(damage, lowest_hp_enemy.rect.center))
-        else:
-            target_marker.clear_target()
+                    damage_texts.append(DamageText(damage, current_target.rect.center))
+            else:
+                hero.move_towards(current_target)
+        
     else:
+        current_target = None
         target_marker.clear_target()
 
-
-        # Si se activa el botón de minions
+    # 🟡 ATAQUE A MINIONS (Minions o Creeps con menor vida)
     if button_attack_minion.is_clicked():
-        minions = [red_minion,creep]
+        minions = [red_minion, creep]
+
+        # Filtra por pantalla y visión
         visible_minions = [
-            m for m in minions if screen.get_rect().colliderect(m.rect) and hero.can_see(m)
+            m for m in minions
+            if screen.get_rect().colliderect(m.rect) and hero.can_see(m)
         ]
 
-        # Encuentra el minion con menos vida
+        # Reasigna siempre al que tenga menor vida visible
         target_minion = None
         lowest_hp = float('inf')
-        for minion in visible_minions:
-            if minion.health < lowest_hp:
-                lowest_hp = minion.health
-                target_minion = minion
+        for m in visible_minions:
+            if m.health < lowest_hp:
+                lowest_hp = m.health
+                target_minion = m
 
-        if target_minion:
-            target_marker.set_target(target_minion)
-            if hero.in_attack_range(target_minion):
-                damage = hero.attack(target_minion)
+        current_target = target_minion
+
+        if current_target:
+            target_marker.set_target(current_target)
+            if hero.in_attack_range(current_target):
+                damage = hero.attack(current_target)
                 if damage > 0:
-                    damage_texts.append(DamageText(damage, target_minion.rect.center))
-        else:
+                    damage_texts.append(DamageText(damage, current_target.rect.center))
+            else:
+                hero.move_towards(current_target)
+    else:
+        # Solo limpia si NO se está atacando con el botón principal
+        if not button_attack.is_clicked():
+            current_target = None
             target_marker.clear_target()
 
+    # -----------------------------
+    # DIBUJO
+    # -----------------------------
     screen.fill((20, 20, 20))
 
     hero.draw(screen)
@@ -112,27 +148,25 @@ while running:
 
     enemy_1.draw(screen)
     enemy_2.draw(screen)
-
     blue_minion.draw(screen)
     red_minion.draw(screen)
     creep.draw(screen)
 
+    tower.draw(screen)
+
     joystick.draw(screen)
     button_attack.draw(screen)
-    target_marker.draw(screen)
     button_attack_minion.draw(screen)
+    target_marker.draw(screen)
 
-    # Dibuja el reloj global
     clock_hud.draw(screen)
-    
-    # Dibuja los textos de daño
+
     for dmg in damage_texts:
         dmg.draw(screen)
-
-    # Elimina los textos expirados
     damage_texts = [d for d in damage_texts if not d.is_expired()]
 
     pygame.display.flip()
     clock.tick(60)
+
 
 pygame.quit()

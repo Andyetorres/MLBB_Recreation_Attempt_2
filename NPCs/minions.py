@@ -6,6 +6,7 @@ class Minion:
         self.color = (0, 0, 128)  # Blue color for minions
         self.max_health = 200
         self.health = 200
+        self.tipo = "minion"
 
     def draw(self, surface):
         pygame.draw.rect(surface, self.color, self.rect)

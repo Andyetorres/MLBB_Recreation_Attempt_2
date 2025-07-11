@@ -9,6 +9,7 @@ class Enemy:
         self.health = 10_000
         self.range = 18
         self.attack_range = (self.range/10)*50  # in pixels
+        self.tipo = "hero"
 
     def draw(self, surface):
         # Draw enemy, health bar, and attack range

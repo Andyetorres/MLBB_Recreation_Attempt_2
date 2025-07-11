@@ -6,6 +6,7 @@ class Creep:
         self.color = (128, 0, 128)  # Purple color for creeps
         self.max_health = 2500
         self.health = 2500
+        self.tipo = "creep"
 
     def draw(self, surface):
         # Draw creep, health bar, and attack range

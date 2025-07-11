@@ -1,4 +1,30 @@
 
+import pygame
+
+class SimpleTower:
+    def __init__(self, x, y):
+        self.rect = pygame.Rect(x, y, 40, 40)  # Las torres son un poco más grandes
+        self.color = (150, 0, 0)  # Color amarillo oscuro
+        self.max_health = 4500
+        self.health = 4500
+        self.tipo = "torre"  # Usar "tipo" y no "type" para evitar conflictos
+
+    def draw(self, surface):
+        pygame.draw.rect(surface, self.color, self.rect)
+        self.draw_health_bar(surface)
+
+    def draw_health_bar(self, surface):
+        bar_width = self.rect.width
+        bar_height = 5
+        x = self.rect.x
+        y = self.rect.y - 10
+        health_ratio = self.health / self.max_health
+
+        # Fondo de la barra de vida (gris)
+        pygame.draw.rect(surface, (100, 100, 100), (x, y, bar_width, bar_height))
+        # Vida restante (verde)
+        pygame.draw.rect(surface, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
+
 
 """
 import pygame
