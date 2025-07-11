@@ -1,7 +1,7 @@
 import pygame
 import time
 from Heros import Enemy , BasicHero
-from HUB import Joystick, ButtonAtackHero, DamageText, TargetMark, ButtonAttackMinion, ClockController
+from HUB import Joystick, ButtonAtackHero, DamageText, TargetMark, ButtonAttackMinion, ClockController, ButtonAtackTower
 from NPCs import Minion, Creep
 from Map import SimpleTower
 
@@ -29,7 +29,8 @@ tower = SimpleTower(200,200)
 
 joystick = Joystick()
 button_attack = ButtonAtackHero(1200, 600, 50)
-button_attack_minion = ButtonAttackMinion(1200, 500, 40)
+button_attack_minion = ButtonAttackMinion(1100, 600, 40)
+button_attack_tower = ButtonAtackTower(1200, 500, 40)
 target_marker = TargetMark()
 
 clock_hud = ClockController(x=WIDTH // 2, y=40)
@@ -49,6 +50,7 @@ while running:
         joystick.handle_event(event)
         button_attack.handle_event(event)
         button_attack_minion.handle_event(event)
+        button_attack_tower.handle_event(event)
 
     joystick.update()
     hero.move(joystick.get_direction())  # Movimiento manual
@@ -138,6 +140,44 @@ while running:
             current_target = None
             target_marker.clear_target()
 
+
+    # 🟤 ATAQUE A TORRES ENEMIGAS
+    if button_attack_tower.is_clicked():
+        torres = [tower]  # ← Aquí puedes agregar más torres si tienes: torre_1, torre_2, etc.
+
+        # Validar si el objetivo actual no es válido
+        if (
+            current_target is None
+            or current_target.health <= 0
+            or not hero.can_see(current_target)
+            or current_target.tipo != "torre"
+        ):
+            # Buscar la torre más cercana visible
+            visible_towers = [
+                t for t in torres if screen.get_rect().colliderect(t.rect) and hero.can_see(t)
+            ]
+
+            if visible_towers:
+                current_target = min(visible_towers, key=lambda t: t.health)
+
+
+        # Atacar o moverse hacia la torre
+        if current_target:
+            target_marker.set_target(current_target)
+
+            if hero.in_attack_range(current_target):
+                damage = hero.attack(current_target)
+                if damage > 0:
+                    damage_texts.append(DamageText(damage, current_target.rect.center))
+            else:
+                hero.move_towards(current_target)
+
+    # 🧹 Limpiar marcador si no se está atacando a nada
+    elif not (button_attack.is_clicked() or button_attack_minion.is_clicked()):
+        current_target = None
+        target_marker.clear_target()
+
+
     # -----------------------------
     # DIBUJO
     # -----------------------------
@@ -152,11 +192,13 @@ while running:
     red_minion.draw(screen)
     creep.draw(screen)
 
+    tower.atacar([hero, red_minion, blue_minion, creep])
     tower.draw(screen)
 
     joystick.draw(screen)
     button_attack.draw(screen)
     button_attack_minion.draw(screen)
+    button_attack_tower.draw(screen)
     target_marker.draw(screen)
 
     clock_hud.draw(screen)

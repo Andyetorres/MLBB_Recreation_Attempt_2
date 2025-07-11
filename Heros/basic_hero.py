@@ -10,8 +10,8 @@ class BasicHero:
         self.move_direction = pygame.Vector2(0, 0)
 
         # Estadísticas base
-        self.max_health = 100
-        self.health = 100
+        self.max_health = 5000
+        self.health = 5000
         self.health_regen = 1.0
 
         self.physical_attack = 20

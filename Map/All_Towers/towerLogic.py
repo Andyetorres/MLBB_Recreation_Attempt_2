@@ -3,28 +3,74 @@ import pygame
 
 class SimpleTower:
     def __init__(self, x, y):
-        self.rect = pygame.Rect(x, y, 40, 40)  # Las torres son un poco más grandes
-        self.color = (150, 0, 0)  # Color amarillo oscuro
+        self.rect = pygame.Rect(x, y, 40, 40)
+        self.color = (150, 0, 0)
         self.max_health = 4500
         self.health = 4500
-        self.tipo = "torre"  # Usar "tipo" y no "type" para evitar conflictos
+        self.tipo = "torre"
+
+        # 📌 Daño
+        self.danio_base = 360
+        self.danio_incr = 240
+        self.danio_max = 4880
+
+        # 📌 Estado de ataque
+        self.rango_ataque = 100
+        self.vel_ataque = 3820  # milisegundos (3.82s)
+        self.ultimo_ataque = 0
+        self.objetivo_actual = None
+        self.golpes_consecutivos = 0
+
+    def puede_atacar(self):
+        return pygame.time.get_ticks() - self.ultimo_ataque >= self.vel_ataque
+
+    def calcular_dano(self):
+        danio = self.danio_base + self.golpes_consecutivos * self.danio_incr
+        return min(danio, self.danio_max)
+
+    def in_range(self, target):
+        return pygame.Vector2(self.rect.center).distance_to(target.rect.center) <= self.rango_ataque
+
+    def atacar(self, objetivos):
+        if not self.puede_atacar():
+            return
+
+        # Filtra objetivos vivos dentro del rango
+        en_rango = [o for o in objetivos if o.health > 0 and self.in_range(o)]
+        if not en_rango:
+            self.objetivo_actual = None
+            self.golpes_consecutivos = 0
+            return
+
+        # Si ya tiene objetivo válido, continúa
+        if self.objetivo_actual in en_rango:
+            objetivo = self.objetivo_actual
+            self.golpes_consecutivos += 1
+        else:
+            objetivo = en_rango[0]
+            self.objetivo_actual = objetivo
+            self.golpes_consecutivos = 0
+
+        danio = self.calcular_dano()
+        objetivo.health = max(0, objetivo.health - danio)
+        self.ultimo_ataque = pygame.time.get_ticks()
 
     def draw(self, surface):
         pygame.draw.rect(surface, self.color, self.rect)
         self.draw_health_bar(surface)
+        self.draw_attack_range(surface)
 
     def draw_health_bar(self, surface):
         bar_width = self.rect.width
         bar_height = 5
         x = self.rect.x
         y = self.rect.y - 10
-        health_ratio = self.health / self.max_health
-
-        # Fondo de la barra de vida (gris)
+        ratio = self.health / self.max_health
         pygame.draw.rect(surface, (100, 100, 100), (x, y, bar_width, bar_height))
-        # Vida restante (verde)
-        pygame.draw.rect(surface, (0, 200, 0), (x, y, bar_width * health_ratio, bar_height))
+        pygame.draw.rect(surface, (0, 200, 0), (x, y, bar_width * ratio, bar_height))
 
+    def draw_attack_range(self, surface):
+        pygame.draw.circle(surface, (150, 150, 150), self.rect.center, self.rango_ataque, 1)
 
 """
 import pygame
